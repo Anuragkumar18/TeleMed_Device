@@ -1,0 +1,80 @@
+//AnuragSahucodeforTeleMed
+#include <Wire.h>
+
+#if defined(ESP32)
+  #include <LiquidCrystal_I2C.h>
+  #include <WiFi.h>
+  #include <BlynkSimpleEsp32.h>
+
+  // ESP32 I2C pins
+  #define I2C_SDA 21
+  #define I2C_SCL 22
+
+  // Blynk credentials
+  #define BLYNK_TEMPLATE_ID "TMPL3oC7LGc03"
+  #define BLYNK_TEMPLATE_NAME "Low cost Telemed"
+  #define BLYNK_AUTH_TOKEN "G9nCH4W7AWUplzwpGLleH0fOdXF9_"
+
+  char ssid[] = "AndroidShare_RL";
+  char pass[] = "08347811";
+
+  LiquidCrystal_I2C lcd(0x27, 16, 2);
+  BlynkTimer timer;
+
+  float temperature = 25.3; // sample data
+  int heartRate = 72;
+
+  void sendSensorData() {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Temp: ");
+    lcd.print(temperature);
+    lcd.print(" C");
+    lcd.setCursor(0, 1);
+    lcd.print("HR: ");
+    lcd.print(heartRate);
+    lcd.print(" bpm");
+
+    Blynk.virtualWrite(V1, temperature);
+    Blynk.virtualWrite(V2, heartRate);
+  }
+
+#else
+  #include <LiquidCrystal_I2C.h>
+
+  // I2C pins SDA=A4, SCL=A5
+  LiquidCrystal_I2C lcd(0x27, 16, 2);
+#endif
+
+void setup() {
+#if defined(ESP32)
+  Serial.begin(115200);
+  Wire.begin(I2C_SDA, I2C_SCL);
+  lcd.init();
+  lcd.backlight();
+
+  lcd.print("Connecting WiFi");
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+  lcd.clear();
+
+  timer.setInterval(1000L, sendSensorData);
+#else
+  Serial.begin(9600);
+  Wire.begin();
+  lcd.init();
+  lcd.backlight();
+
+  lcd.setCursor(0, 0);
+  lcd.print("Arduino Uno");
+  lcd.setCursor(0, 1);
+  lcd.print("LCD Ready");
+#endif
+}
+
+void loop() {
+#if defined(ESP32)
+  Blynk.run();
+  timer.run();
+#else
+#endif
+}
